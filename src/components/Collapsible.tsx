@@ -1,14 +1,6 @@
 import React from 'react'
+import { DirectoryType } from '@/types/types';
 
-
-interface DirectoryType {
-  url?: string;
-  [directoryName: string]: DirectoryType | File | string | undefined;
-}
-
-interface File {
-  url: string;
-}
 
 const Collapsible = (dir: DirectoryType) => {
   const renderDirectory = (directory: DirectoryType, indentLevel: number): JSX.Element[] => {

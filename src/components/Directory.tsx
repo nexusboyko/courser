@@ -1,20 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react'
 import Collapsible from './Collapsible';
-
-
-interface DirectoryType {
-  url?: string;
-  [directoryName: string]: DirectoryType | File | string | undefined;
-}
-
-interface File {
-  url: string;
-}
-
-interface DirectoryProps {
-  dir: DirectoryType
-}
+import { DirectoryType } from '@/types/types';
 
 export const requestDirectory = async (url: string) => {
   try {
@@ -30,7 +17,7 @@ export const requestDirectory = async (url: string) => {
   }
 }
 
-const Directory = (props: DirectoryProps) => {
+const Directory = ({ dir }: { dir: DirectoryType}) => {
   const [url, setUrl] = useState<string>("")
   const [crawled, setCrawled] = useState<boolean>(false)
 
@@ -48,7 +35,7 @@ const Directory = (props: DirectoryProps) => {
     <>
       <div>Directory</div>
 
-      <Collapsible dir={props.dir} />
+      <Collapsible dir={dir} />
 
       <p>{crawled ? url : ''}</p>
 
