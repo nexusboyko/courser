@@ -3,27 +3,16 @@ import React, { useEffect, useState } from 'react'
 import Collapsible from './Collapsible';
 import { DirectoryType } from '@/types/types';
 
-export const requestDirectory = async (url: string) => {
-  try {
-    // const res = await 
-    // return res
+// TODO: Local storage for found dirs + Redux state?
 
-    console.log(url)
-
-  } catch (error) {
-    console.error('Error fetching directory:', error)
-
-    throw error
-  }
-}
-
-const Directory = ({ dir }: { dir: DirectoryType}) => {
-  const [url, setUrl] = useState<string>("")
-  const [crawled, setCrawled] = useState<boolean>(false)
+const Directory = () => {
+  const [dir, setDir] = useState<DirectoryType>({} as DirectoryType);
+  const [url, setUrl] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   function clear() {
     setUrl("")
-    setCrawled(false)
   }
 
   useEffect(() => {
@@ -31,34 +20,57 @@ const Directory = ({ dir }: { dir: DirectoryType}) => {
     setUrl('')
   }, [])
 
+  useEffect(() => {
+    if (error !== "") {
+      setTimeout(() => {
+        setError("")
+      }, 2000)
+    }
+  }, [error]);
+
+  const runCourserOnSourceURL = async (sourceURL: string) => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/courser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: sourceURL,
+        })
+      })
+
+      return res.json()
+    } catch (error: Error | any) {
+      console.error(error);
+
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <>
-      <div>Directory</div>
-
-      <Collapsible dir={dir} />
-
-      <p>{crawled ? url : ''}</p>
-
+      {
+        error && (
+          <p className='text-center text-sm text-error m-5'>Error fetching directory: {error}</p>
+        )
+      }
       <input type="text" className='input input-bordered w-[45%] text-center' name="URL" id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
 
-      <div className='flex gap-2 m-5'>
+      <div className="flex">
         <button className='btn btn-sm btn-primary' onClick={async () => {
-          setCrawled(true)
-          // crawl
+          // FIXME: Error handling
+          setDir(await runCourserOnSourceURL(url))
+        }} disabled={loading}>Crawl</button>
 
-        }}>Crawl</button>
-
-        <button className={`btn btn-sm ${!crawled ? 'btn-disabled' : 'btn-primary'}`} onClick={() => {
-          if (crawled) {
-            // re-crawl
-
-          } else {
-            alert('Nothing to retry! Crawl first.')
-          }
-        }}>Retry</button>
-
-        <button className='btn btn-sm btn-error' onClick={() => clear()}>Clear</button>
+        <button className='btn btn-sm btn-warning'>Cancel</button>
       </div>
+
+      <p className='m-5'>{loading ? 'Loading...' : ''}</p>
+
+      <Collapsible dir={dir} />
     </>
   )
 }
