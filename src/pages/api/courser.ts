@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import cheerio from 'cheerio';
+import { load as cheerioLoad } from 'cheerio';
 import url from 'url';
 import axiosRetry from 'axios-retry';
 
@@ -77,24 +77,25 @@ async function discoverURLs(targetURL: string, sourceURL: string): Promise<boole
       throw new Error("Request failed with status code " + response.status);
     }
 
-    const $ = cheerio.load(response.data);
+    const $ = cheerioLoad(response.data);
 
     $("a").each((index, element) => {
       const link = $(element).attr("href");
 
+      
       if (link && !link.startsWith("javascript:")) {
         const absolutePath = url.resolve(targetURL, link);
-
+        
         if (absolutePath.includes(sourceURL) && !absolutePath.includes("?")) {
+          console.log('\t' + absolutePath);
           toVisitURLs.push(absolutePath);
-          // console.log("\t" + absolutePath);
         }
       }
     });
 
     return true;
   } catch (error : AxiosError | any) {
-    console.error(`Error for ${targetURL}: ${error.message}\n ${error}`);
+    // console.error(`Error for ${targetURL}: ${error.message}\n ${error}`);
 
     return false;
   }
@@ -135,7 +136,7 @@ async function courseURL(sourceURL: string): Promise<Set<string>> {
 
         visitedURLs.add(constructedURLString);
 
-        // console.log("discovering " + constructedURLString);
+        console.log("-> " + constructedURLString);
         await discoverURLs(constructedURLString, SOURCE_URL);
       }
     }
@@ -145,6 +146,25 @@ async function courseURL(sourceURL: string): Promise<Set<string>> {
   // console.log(visitedURLs);
 
   return visitedURLs;
+}
+
+async function CheckExistsURL(url: string): Promise<boolean> {
+  try {
+    const response: AxiosResponse = await axios.get(url);
+
+    if (response === undefined) {
+      throw new Error("Response is undefined");
+    }
+    if (response.status >= 400) {
+      throw new Error("Request failed with status code " + response.status);
+    }
+
+    return true;
+  } catch (error : AxiosError | any) {
+    // console.error(`Error for ${url}: ${error.message}\n ${error}`);
+
+    return false;
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -161,7 +181,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await courseURL(source);
-    const dir = createDirectoryStructure(Array.from(visitedURLs));
+
+    const urls: string[] = Array.from(visitedURLs);
+
+    // loop through each URL and verify it exists;
+    // if it does not remove it from the array
+    for (let i = 0; i < urls.length; i++) {
+      const exists = await CheckExistsURL(urls[i]);
+      if (!exists) {
+        urls.splice(i, 1);
+        i--;
+      }
+    }
+
+    const dir = createDirectoryStructure(urls);
+
+    console.log(JSON.stringify(dir, null, 1));
     
     res.status(200).json(dir);
     
