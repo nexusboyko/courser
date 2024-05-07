@@ -47,6 +47,7 @@ const Directory = () => {
 
     } finally {
       setLoading(false)
+      setUrl("");
     }
   }
 
@@ -57,20 +58,27 @@ const Directory = () => {
           <p className='text-center text-sm text-error m-5'>Error fetching directory: {error}</p>
         )
       }
-      <input type="text" className='input input-bordered w-[45%] text-center' name="URL" id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
 
-      <div className="flex">
-        <button className='btn btn-sm btn-primary' onClick={async () => {
-          // FIXME: Error handling
-          setDir(await runCourserOnSourceURL(url))
-        }} disabled={loading}>Crawl</button>
+      <div className="flex w-[45%] justify-center items-center m-5">
+        <input type="text" className='input w-[85%] input-bordered text-center' name="URL" 
+            placeholder={loading ? 'Crawling...' : 'Copy the URL you\'d like to crawl here!'} id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
 
-        <button className='btn btn-sm btn-warning'>Cancel</button>
       </div>
 
-      <p className='m-5'>{loading ? 'Loading...' : ''}</p>
+      <div className="flex gap-2">
+        <button className='btn btn-md btn-outline btn-secondary' onClick={async () => {
+          // FIXME: Error handling
+          const source = url;
+          setUrl("Crawling...");
+          setDir(await runCourserOnSourceURL(source));
+        }} disabled={loading}>Crawl</button>
+
+        <button className='btn btn-md btn-outline btn-primary'>Cancel</button>
+      </div>
 
       <Collapsible dir={dir} />
+
+      {/* <p className='m-5 fade-up'>{loading ? 'Loading...' : ''}</p> */}
     </>
   )
 }
