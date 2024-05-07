@@ -5,7 +5,6 @@ import { DirectoryType } from '@/types/types';
 const Collapsible = (dir: DirectoryType) => {
   const renderDirectory = (directory: DirectoryType, indentLevel: number): JSX.Element[] => {
     const renderedItems: JSX.Element[] = [];
-    const indent = '__'.repeat(indentLevel);
 
     for (const key in directory) {
         const item = directory[key];
@@ -14,23 +13,18 @@ const Collapsible = (dir: DirectoryType) => {
             const isFile = Object.keys(item).filter(key => key !== 'url').length === 0;
 
             renderedItems.push(
-                // <div key={key}>
-                //     <div>
-                //         {indent}{isFile ? 'file' : 'dir'} {key}: {item.url}
-                //     </div>
-                //     {renderDirectory(item as DirectoryType, indentLevel + 1)}
-                // </div>
-
                 isFile ? (
                   <li key={key}>
-                    {/* {`<file>`} {key}: {item.url} */}
+                    {/* link to FILE */}
                     <a href={item.url} target='_blank'>{key}</a>
                   </li>
                 ) : (
                   <li className='section'>
-                    {/* {`<dir>`} {key}: {item.url} */}
                     <input type="checkbox" id={key} />
-                    <label htmlFor={key}>📂 {key}</label>
+                    <label htmlFor={key}> {key}{' '}
+                      {/* link to DIRECTORY */}
+                      <a href={item.url} target='_blank' className='italic opacity-50'>{key}</a>
+                    </label>
                     <ul>
                       {renderDirectory(item as DirectoryType, indentLevel + 1)}
                     </ul>
@@ -43,10 +37,13 @@ const Collapsible = (dir: DirectoryType) => {
     return renderedItems;
   };
 
+  const top = Object.keys(dir)[0];
+  const collapsible = renderDirectory(dir[top] as DirectoryType, 0);
+
   return (
-    <div className='m-4 w-[45%] h-[45%] overflow-scroll'>
-      <ul className='h-fit tree text-xl'>
-        {renderDirectory(dir, 0)}
+    <div className='m-4 w-[45%] h-[55%] overflow-scroll'>
+      <ul className='h-fit tree text-xl rounded-xl'>
+        {collapsible.length === 0 ? <li className='text-center'>...</li> : collapsible}
       </ul>
     </div>
   )
