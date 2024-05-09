@@ -3,7 +3,18 @@ import React, { useEffect, useState } from 'react'
 import Collapsible from './Collapsible';
 import { DirectoryType } from '@/types/types';
 
-// TODO: Local storage for found dirs + Redux state?
+const getDirFromLocalStorage = (): DirectoryType | null => {
+  const dirJSON = localStorage.getItem('courser-directory-json');
+  if (dirJSON) {
+    return JSON.parse(dirJSON);
+  }
+  return null;
+};
+
+const setDirToLocalStorage = (dir: DirectoryType): void => {
+  localStorage.setItem('courser-directory-json', JSON.stringify(dir));
+};
+
 
 const Directory = () => {
   const [dir, setDir] = useState<DirectoryType>({} as DirectoryType);
@@ -11,13 +22,15 @@ const Directory = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  function clear() {
+  const clear = () => {
     setUrl("")
   }
 
   useEffect(() => {
     clear()
     setUrl('')
+    const savedDir = getDirFromLocalStorage();
+    setDir(savedDir !== null ? savedDir : {});
   }, [])
 
   useEffect(() => {
@@ -28,11 +41,7 @@ const Directory = () => {
     }
   }, [error]);
 
-  const mergeDirs = (dir: DirectoryType, newDir: DirectoryType) => {
-    return { ...dir, ...newDir }
-  }
-
-  function unionJSONs(json1: any, json2: any): DirectoryType {
+  const unionJSONs = (json1: any, json2: any): DirectoryType => {
     const result: any = {};
 
     for (const key in json1) {
@@ -77,7 +86,7 @@ const Directory = () => {
     }
   }
 
-  async function runCrawler() {
+  const runCrawler = async () => {
     if (url === "") {
       setError("No URL provided");
       return;
@@ -94,6 +103,10 @@ const Directory = () => {
     }
   }
 
+  const saveDir = () => {
+    setDirToLocalStorage(dir);
+  }
+
   return (
     <>
       {
@@ -103,7 +116,7 @@ const Directory = () => {
       }
 
       <div className="flex w-[45%] justify-center items-center m-5">
-        <input type="text" className='input w-[85%] input-bordered text-center rounded-2xl font-semibold' name="URL"
+        <input type="text" className='input w-[85%] input-bordered text-center rounded-2xl font-light' name="URL"
           placeholder={loading ? 'Crawling...' : 'Copy the URL you\'d like to crawl here!'} id="url" value={url} onChange={(e) => setUrl(e.target.value)} />
 
       </div>
@@ -111,12 +124,10 @@ const Directory = () => {
       <div className="flex gap-2">
         <button className='btn btn-md btn-outline btn-secondary' onClick={runCrawler} disabled={loading}>Crawl</button>
 
-        <button className='btn btn-md btn-outline btn-primary'>Cancel</button>
+        <button className='btn btn-md btn-outline btn-success' onClick={saveDir} disabled={Object.keys(dir).length == 0}>Save</button>
       </div>
 
       <Collapsible dir={dir} />
-
-      {/* <p className='m-5 fade-up'>{loading ? 'Loading...' : ''}</p> */}
     </>
   )
 }
