@@ -16,15 +16,13 @@ const Collapsible = (dir: DirectoryType) => {
                 isFile ? (
                   <li key={key}>
                     {/* link to FILE */}
-                    <a href={item.url} target='_blank'>{key}</a>
+                    {'📄'}<a href={item.url} target='_blank'>{key}</a>
                   </li>
                 ) : (
-                  <li className='section'>
-                    <input type="checkbox" id={key} />
-                    <label htmlFor={key}> {key}{' '}
-                      {/* link to DIRECTORY */}
-                      <a href={item.url} target='_blank' className='italic opacity-50'>{key}</a>
-                    </label>
+                  <li className='section' key={key}>
+                    <input type="checkbox" className='folder-checkbox' id={key} />
+                    {/* link to DIRECTORY */}
+                    {' 📂'}<a href={item.url} target='_blank' className='italic opacity-50'>{key}</a>
                     <ul>
                       {renderDirectory(item as DirectoryType, indentLevel + 1)}
                     </ul>
