@@ -4,6 +4,10 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
+* {
+  font-family: 'Inter', sans-serif;
+}
+
 .tree, .section ul {
   list-style: none;
   padding: 0;
@@ -12,7 +16,6 @@
 .tree {
   padding: 1em;
   background: #151a1f;
-  font-family: 'Inter', sans-serif;
 }
 .tree li {
   /* border-bottom: 1px solid #d2d2d2; */
@@ -38,4 +41,8 @@
 .section ul li a {
   color: cadetblue;
   text-decoration: underline;
+}
+
+.folder-checkbox {
+  transform: scale(1.5); /* Scale the checkbox */
 }
