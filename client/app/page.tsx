@@ -35,7 +35,7 @@ type NestedItem = {
 const formatUrls = (urls: string[]): NestedItem => {
   const root: NestedItem = {};
 
-  urls.forEach((url) => {
+  urls?.forEach((url) => {
     if (!url) return;
     try {
       const parsedUrl = new URL(url);
@@ -63,52 +63,168 @@ const formatUrls = (urls: string[]): NestedItem => {
   return root;
 };
 
+const Folder = ({ urls }: { urls: string[] }) => {
+  const [nestedItem, setNestedItem] = useState<NestedItem>(formatUrls(urls));
+
+  // edit key string in JSON
+  const editKey = (path: string[], newKey: string) => {
+    const updateNestedItem = (item: NestedItem, keys: string[]): NestedItem => {
+      const [key, ...rest] = keys;
+      if (rest.length === 0) {
+        const value = item[key];
+        const newItem = { ...item };
+        delete newItem[key];
+        newItem[newKey] = value;
+        return newItem;
+      }
+      return {
+        ...item,
+        [key]: updateNestedItem(item[key] as NestedItem, rest),
+      };
+    };
+    setNestedItem((prev) => updateNestedItem(prev, path));
+  };
+
+  return (
+    <Collapsible nestedItem={nestedItem} editKey={editKey} />
+  );
+};
+
 const Collapsible = ({
   nestedItem,
   level = 0,
+  path = [],
+  editKey,
 }: {
   nestedItem: NestedItem;
   level?: number;
-}) => (
-  <ul className="ms-10">
-    {Object.entries(nestedItem)
-      .sort(([A], [B]) => A.localeCompare(B))
-      .map(([key, value]) => {
-        const isLink = typeof value === "string";
-        const [collapsed, setCollapsed] = useState(true);
+  path?: string[];
+  editKey: (path: string[], newKey: string) => void;
+}) => {
+  const [collapsed, setCollapsed] = useState<{ [key: string]: boolean }>({});
 
-        return (
-          <li key={key} className="mb-2">
-            {isLink ? (
-              <a
-                href={value as string}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600"
-              >
-                {"📄"} {key}
-              </a>
-            ) : (
-              <>
-                <span
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="cursor-pointer text-gray-500"
-                >
-                  {collapsed ? "📁" : "📂"} {key}
-                </span>
-                {!collapsed && (
-                  <Collapsible
-                    nestedItem={value as NestedItem}
-                    level={level + 1}
-                  />
-                )}
-              </>
-            )}
-          </li>
-        );
-      })}
-  </ul>
-);
+  const toggleCollapse = (key: string) => {
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <ul className={`ms-10`}>
+      {Object.entries(nestedItem)
+        .sort(([A], [B]) => A.localeCompare(B))
+        .map(([key, value]) => {
+          const isLink = typeof value === "string";
+          const [isEditing, setIsEditing] = useState(false);
+          const [newKey, setNewKey] = useState(key);
+
+          return (
+            <li key={key} className="mb-2">
+              {isLink ? (
+                isEditing ? (
+                  <>
+                    <form
+                      action=""
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        editKey([...path, key], newKey);
+                        setIsEditing(false);
+                      }}
+                    >
+                      <input
+                        value={newKey}
+                        onChange={(e) => setNewKey(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setIsEditing(false);
+                          }
+                        }}
+                        onBlur={() => setIsEditing(false)}
+                        autoFocus
+                        className="border-gray-300 focus:ring-indigo-500"
+                        type="text"
+                      />
+                    </form>
+                  </>
+                ) : (
+                  <span>
+                    <a
+                      href={value as string}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600"
+                    >
+                      {"📄"} {key}
+                    </a>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="ml-2 text-gray-500 opacity-50"
+                    >
+                      ✏️
+                    </button>
+                  </span>
+                )
+              ) : isEditing ? (
+                <>
+                  <form
+                    action=""
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      editKey([...path, key], newKey);
+                      setIsEditing(false);
+                    }}
+                  >
+                    <input
+                      value={newKey}
+                      onChange={(e) => setNewKey(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsEditing(false);
+                        }
+                      }}
+                      onBlur={() => setIsEditing(false)}
+                      autoFocus
+                      className="border-gray-300 focus:ring-indigo-500 text-sm"
+                      type="text"
+                    />
+                  </form>
+                  {collapsed[key] && (
+                    <Collapsible
+                      nestedItem={value as NestedItem}
+                      level={level + 1}
+                      path={[...path, key]}
+                      editKey={editKey}
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  <span
+                    onClick={() => toggleCollapse(key)}
+                    className="cursor-pointer"
+                  >
+                    {collapsed[key] ? "📁" : "📂"} {key}
+                  </span>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="ml-2 text-gray-500 opacity-50"
+                  >
+                    ✏️
+                  </button>
+                  {collapsed[key] && (
+                    <Collapsible
+                      nestedItem={value as NestedItem}
+                      level={level + 1}
+                      path={[...path, key]}
+                      editKey={editKey}
+                    />
+                  )}
+                </>
+              )}
+            </li>
+          );
+        })}
+    </ul>
+  );
+};
 
 // https://courses.cs.washington.edu/courses/cse473/24sp/
 export default function Home() {
@@ -162,7 +278,7 @@ export default function Home() {
         {loading && <small className="pt-2">loading. . .</small>}
       </div>
       <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
-        {json && <Collapsible nestedItem={json} />}
+        {dir && <Folder urls={dir} />}
       </small>
     </main>
   );
