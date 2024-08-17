@@ -27,6 +27,8 @@ func main() {
 		})
 
 		r.Post("/courser", internal.NewCourserHandler().ServeHTTP)
+
+		r.Post("/reader", internal.NewReaderHandler().ServeHTTP)
 	})
 
 	http.ListenAndServe(`:8080`, router)
