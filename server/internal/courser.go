@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -47,7 +48,11 @@ func runCourser(src string) {
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 
-		urls[e.Request.AbsoluteURL(link)] = true
+		// TODO: deal with "other" misc. links
+		// FIXME: ignore URLs with "?" or ";" in them
+		if strings.Contains(e.Request.AbsoluteURL(link), domain) {
+			urls[e.Request.AbsoluteURL(link)] = true
+		}
 
 		// visit link
 		c.Visit(e.Request.AbsoluteURL(link))
@@ -60,6 +65,8 @@ func runCourser(src string) {
 
 	// run crawler
 	c.Visit(src)
+
+	c.Wait()
 }
 
 type RequestBody struct {
@@ -79,13 +86,16 @@ func (h *CourserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	runCourser(body.URL)
 	elapsed := time.Since(start)
 
-	defer fmt.Printf("found %d links in %s.\n\n", len(urls), elapsed)
+	fmt.Printf("found %d links in %s.\n\n", len(urls), elapsed)
 
 	// unique url keys (from urls set)
 	keys := []string{}
 	for k := range urls {
-		keys = append(keys, k)
+		if strings.Contains(k, body.URL) {
+			keys = append(keys, k)
+		}
 	}
+
 	// convert to json response
 	jsonData, err := json.Marshal(keys)
 	if err != nil {
@@ -93,7 +103,7 @@ func (h *CourserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err = os.WriteFile("./links.json", jsonData, 0644)
+	// err = os.WriteFile("./urls.json", jsonData, 0644)
 	// if err != nil {
 	// 	fmt.Println(err)
 	// 	return
