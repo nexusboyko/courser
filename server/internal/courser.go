@@ -63,6 +63,16 @@ func runCourser(src string) {
 		fmt.Println(">", r.URL.String())
 	})
 
+	// deal with failed requests
+	c.OnError(func(r *colly.Response, err error) {
+		fmt.Printf("\t ! %s failed with status code: %d\n", r.Request.URL, r.StatusCode)
+
+		if r.StatusCode == 404 {
+			// remove from list if non-existent
+			delete(urls, r.Request.URL.String())
+		}
+	})
+
 	// run crawler
 	c.Visit(src)
 
