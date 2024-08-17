@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { env } from "process";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 const crawl = async (url : string) => {
@@ -25,10 +25,83 @@ const crawl = async (url : string) => {
   }
 }
 
+type NestedItem = {
+  [key: string]: NestedItem | string;
+};
+
+const formatUrls = (urls: string[]): NestedItem => {
+  const root: NestedItem = {};
+
+  urls.forEach((url) => {
+    if (!url) return;
+    try {
+      const parsedUrl = new URL(url);
+      const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
+
+      let currentLevel = root;
+
+      pathParts.forEach((part, index) => {
+        const isFile = part.includes('.');
+
+        if (isFile || index === pathParts.length - 1) {
+          currentLevel[part] = parsedUrl.href;
+        } else {
+          if (!currentLevel[part]) {
+            currentLevel[part] = {};
+          }
+          currentLevel = currentLevel[part] as NestedItem;
+        }
+      });
+    } catch (e) {
+      console.error(`Invalid URL: ${url}`);
+    }
+  });
+
+  return root;
+}
+
+const Collapsible = ({ nestedItem, level = 0 }: { nestedItem: NestedItem; level?: number }) => (
+  <ul className="ms-10">
+    {Object.entries(nestedItem)
+      .sort(([A], [B]) => A.localeCompare(B))
+      .map(([key, value]) => {
+        const isLink = typeof value === 'string';
+        const [collapsed, setCollapsed] = useState(true);
+
+        return (
+          <li key={key} className="mb-2">
+            {isLink ? (
+              <a href={value as string} target="_blank" rel="noopener noreferrer" className="text-blue-600">
+                {'📄'} {key}
+              </a>
+            ) : (
+              <>
+                <span
+                  onClick={() => setCollapsed(!collapsed)}
+                  className="cursor-pointer text-gray-500"
+                >
+                  {collapsed ? '📁' : '📂'} {key}
+                </span>
+                {!collapsed && <Collapsible nestedItem={value as NestedItem} level={level + 1} />}
+              </>
+            )}
+          </li>
+        );
+      })}
+  </ul>
+);
+
 // https://courses.cs.washington.edu/courses/cse473/24sp/
 export default function Home() {
-  const [dir, setDir] = useState({});
+  const [dir, setDir] = useState([]);
   const [url, setUrl] = useState("");
+
+  const [json, setJson] = useState({});
+
+  useEffect(() => {
+    // console.log(formatUrls(dir));
+    setJson(formatUrls(dir));
+  }, [dir]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -43,8 +116,10 @@ export default function Home() {
         <input type="text" name="url" className="border" onChange={(e) => setUrl(e.target.value)} value={url} />
         <button type="submit">crawl</button>
       </form>
-      <small>
-        {JSON.stringify(dir, null, 2)}
+      <small className="p-10">
+        {
+          json && <Collapsible nestedItem={json} />
+        }
       </small>
     </main>
   );
