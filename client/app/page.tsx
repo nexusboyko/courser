@@ -63,30 +63,40 @@ const formatUrls = (urls: string[]): NestedItem => {
   return root;
 };
 
-const Folder = ({ urls }: { urls: string[] }) => {
-  const [nestedItem, setNestedItem] = useState<NestedItem>(formatUrls(urls));
-
-  // edit key string in JSON
-  const editKey = (path: string[], newKey: string) => {
-    const updateNestedItem = (item: NestedItem, keys: string[]): NestedItem => {
-      const [key, ...rest] = keys;
-      if (rest.length === 0) {
-        const value = item[key];
-        const newItem = { ...item };
-        delete newItem[key];
-        newItem[newKey] = value;
-        return newItem;
-      }
-      return {
-        ...item,
-        [key]: updateNestedItem(item[key] as NestedItem, rest),
-      };
-    };
-    setNestedItem((prev) => updateNestedItem(prev, path));
-  };
+const Folder = ({ formatted, editKeyInJson }: { formatted: NestedItem, editKeyInJson: (path: string[], newKey: string) => void }) => {
+  // const [nestedItem, setNestedItem] = useState<NestedItem>(formatted);
+  const [save, setSave] = useState("");
 
   return (
-    <Collapsible nestedItem={nestedItem} editKey={editKey} />
+    <>
+      <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
+        <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} />
+      </small>
+      <div className="flex justify-center">
+        <form>
+          <input
+            type="text"
+            placeholder="save as..."
+            value={save}
+            onChange={(e) => setSave(e.target.value)}
+            className="border"
+          />
+          <button className="border hover:bg-gray-200" type="submit" onClick={(e)  => {
+            e.preventDefault();
+            if (save) {
+              localStorage.setItem("courser", JSON.stringify({
+                ...JSON.parse(localStorage.getItem("courser") ?? "{}"),
+                [save]: formatted,
+              }));
+            }
+            alert("Saved!");
+            setSave("");
+          }}>
+            save
+          </button>
+        </form>
+      </div>
+    </>
   );
 };
 
@@ -94,17 +104,25 @@ const Collapsible = ({
   nestedItem,
   level = 0,
   path = [],
-  editKey,
+  editKeyInJson,
 }: {
   nestedItem: NestedItem;
   level?: number;
   path?: string[];
-  editKey: (path: string[], newKey: string) => void;
+  editKeyInJson: (path: string[], newKey: string) => void;
 }) => {
   const [collapsed, setCollapsed] = useState<{ [key: string]: boolean }>({});
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [newKey, setNewKey] = useState("");
 
   const toggleCollapse = (key: string) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleEditKeySubmit = (e: React.FormEvent, key: string, path: string[]) => {
+    e.preventDefault();
+    editKeyInJson([...path, key], newKey);
+    setEditingKey(null);
   };
 
   return (
@@ -113,37 +131,29 @@ const Collapsible = ({
         .sort(([A], [B]) => A.localeCompare(B))
         .map(([key, value]) => {
           const isLink = typeof value === "string";
-          const [isEditing, setIsEditing] = useState(false);
-          const [newKey, setNewKey] = useState(key);
+          const isEditing = editingKey === key;
 
           return (
             <li key={key} className="mb-2">
               {isLink ? (
                 isEditing ? (
-                  <>
-                    <form
-                      action=""
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        editKey([...path, key], newKey);
-                        setIsEditing(false);
+                  <form
+                    onSubmit={(e) => handleEditKeySubmit(e, key, path)}
+                  >
+                    <input
+                      value={newKey}
+                      onChange={(e) => setNewKey(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setEditingKey(null);
+                        }
                       }}
-                    >
-                      <input
-                        value={newKey}
-                        onChange={(e) => setNewKey(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") {
-                            setIsEditing(false);
-                          }
-                        }}
-                        onBlur={() => setIsEditing(false)}
-                        autoFocus
-                        className="border-gray-300 focus:ring-indigo-500"
-                        type="text"
-                      />
-                    </form>
-                  </>
+                      onBlur={() => setEditingKey(null)}
+                      autoFocus
+                      className="border-gray-300 focus:ring-indigo-500"
+                      type="text"
+                    />
+                  </form>
                 ) : (
                   <span>
                     <a
@@ -155,69 +165,62 @@ const Collapsible = ({
                       {"📄"} {key}
                     </a>
                     <button
-                      onClick={() => setIsEditing(true)}
+                      onClick={() => {
+                        setEditingKey(key);
+                        setNewKey(key);
+                      }}
                       className="ml-2 text-gray-500 opacity-50"
                     >
                       ✏️
                     </button>
                   </span>
                 )
-              ) : isEditing ? (
-                <>
+              ) : (
+                isEditing ? (
                   <form
-                    action=""
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      editKey([...path, key], newKey);
-                      setIsEditing(false);
-                    }}
+                    onSubmit={(e) => handleEditKeySubmit(e, key, path)}
                   >
                     <input
                       value={newKey}
                       onChange={(e) => setNewKey(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Escape") {
-                          setIsEditing(false);
+                          setEditingKey(null);
                         }
                       }}
-                      onBlur={() => setIsEditing(false)}
+                      onBlur={() => setEditingKey(null)}
                       autoFocus
-                      className="border-gray-300 focus:ring-indigo-500 text-sm"
+                      className="border-gray-300 focus:ring-indigo-500"
                       type="text"
                     />
-                  </form>
-                  {collapsed[key] && (
-                    <Collapsible
-                      nestedItem={value as NestedItem}
-                      level={level + 1}
-                      path={[...path, key]}
-                      editKey={editKey}
-                    />
-                  )}
-                </>
-              ) : (
-                <>
-                  <span
-                    onClick={() => toggleCollapse(key)}
-                    className="cursor-pointer"
-                  >
-                    {collapsed[key] ? "📁" : "📂"} {key}
-                  </span>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="ml-2 text-gray-500 opacity-50"
-                  >
-                    ✏️
-                  </button>
-                  {collapsed[key] && (
-                    <Collapsible
-                      nestedItem={value as NestedItem}
-                      level={level + 1}
-                      path={[...path, key]}
-                      editKey={editKey}
-                    />
-                  )}
-                </>
+                  </form>                  
+                ) : (
+                  <>
+                    <span
+                      onClick={() => toggleCollapse(key)}
+                      className="cursor-pointer"
+                    >
+                      {collapsed[key] ? "📂" : "📁"} {key}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setEditingKey(key);
+                        setNewKey(key);
+                      }}
+                      className="ml-2 text-gray-500 opacity-50"
+                    >
+                      ✏️
+                    </button>
+                  </>
+                )
+              )}
+              {collapsed[key] && (
+                <Collapsible
+                  nestedItem={value as NestedItem}
+                  level={level + 1}
+                  path={[...path, key]}
+                  editKeyInJson={editKeyInJson}
+                />
               )}
             </li>
           );
@@ -242,44 +245,78 @@ export default function Home() {
     setJson(formatUrls(dir));
   }, [dir]);
 
+  useEffect(() => {
+    console.log('updated', json);
+  }, [json]);
+
+  // edit key string in JSON
+  const editKeyInJson = (path: string[], newKey: string) => {
+    const updateNestedItem = (item: NestedItem, keys: string[]): NestedItem => {
+      const [key, ...rest] = keys;
+      if (rest.length === 0) {
+        const value = item[key];
+        const newItem = { ...item };
+        delete newItem[key];
+        newItem[newKey] = value;
+        return newItem;
+      }
+      return {
+        ...item,
+        [key]: updateNestedItem(item[key] as NestedItem, rest),
+      };
+    };
+    setJson((prev) => updateNestedItem(prev, path));
+  };
+
   return (
-    <main className="flex min-h-screen flex-col justify-start p-24">
-      <div className="flex flex-col items-center mb-6">
-        <h1 className="font-semibold flex gap-x-1 p-2 text-[#727bb9]">
-          <Image
-            src="https://github.com/nexusboyko/courser/assets/71574111/39e85446-bda3-44dd-a109-b8f327d42d6c"
-            alt="courser"
-            width={15}
-            height={15}
-            className="object-contain"
-          />
-          courser
-        </h1>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setLoading(true);
-            setDir(await crawl(url));
-            setLoading(false);
-          }}
-        >
-          <label htmlFor="url">URL</label>
-          <input
-            type="text"
-            name="url"
-            className="border mx-2"
-            onChange={(e) => setUrl(e.target.value)}
-            value={url}
-          />
-          <button type="submit" className="border hover:bg-gray-200">
-            crawl
-          </button>
-        </form>
-        {loading && <small className="pt-2">loading. . .</small>}
-      </div>
-      <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
-        {dir && <Folder urls={dir} />}
-      </small>
-    </main>
+    <>
+      <section id="sidebar" className="absolute left-0 top-1/4">
+        {
+          Object.entries(JSON.parse(localStorage.getItem("courser") ?? "{}")).map(([key, nestedItem]) => (
+            <div key={key} className="my-2">
+              <small className="font-semibold" onClick={() => {
+                setJson(nestedItem as NestedItem);
+              }}>{key}</small>
+            </div>
+          ))
+        }
+      </section>
+      <main className="flex min-h-screen flex-col justify-start p-24">
+        <div className="flex flex-col items-center mb-6">
+          <h1 className="font-semibold flex gap-x-1 p-2 text-[#727bb9]">
+            <Image
+              src="https://github.com/nexusboyko/courser/assets/71574111/39e85446-bda3-44dd-a109-b8f327d42d6c"
+              alt="courser"
+              width={15}
+              height={15}
+              className="object-contain"
+            />
+            courser
+          </h1>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setLoading(true);
+              setDir(await crawl(url));
+              setLoading(false);
+            }}
+          >
+            <label htmlFor="url">URL</label>
+            <input
+              type="text"
+              name="url"
+              className="border mx-2"
+              onChange={(e) => setUrl(e.target.value)}
+              value={url}
+            />
+            <button type="submit" className="border hover:bg-gray-200">
+              crawl
+            </button>
+          </form>
+          {loading && <small className="pt-2">loading. . .</small>}
+        </div>
+        <Folder formatted={json} editKeyInJson={editKeyInJson} />
+      </main>
+    </>
   );
 }
