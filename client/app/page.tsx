@@ -63,12 +63,30 @@ const formatUrls = (urls: string[]): NestedItem => {
   return root;
 };
 
-const Folder = ({ formatted, editKeyInJson }: { formatted: NestedItem, editKeyInJson: (path: string[], newKey: string) => void }) => {
+const Folder = ({
+  formatted,
+  editKeyInJson,
+}: {
+  formatted: NestedItem;
+  editKeyInJson: (path: string[], newKey: string) => void;
+}) => {
   // const [nestedItem, setNestedItem] = useState<NestedItem>(formatted);
   const [save, setSave] = useState("");
+  const [toast, setToast] = useState(false);
 
   return (
     <>
+      {
+        <small
+          className={`absolute bottom-6 left-1/2 rounded-lg bg-green-500 text-white p-2 text-center transition-all duration-500 ease-in-out ${
+            toast
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 scale-90 translate-y-[50%]"
+          }`}
+        >
+          Saved!
+        </small>
+      }
       <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
         <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} />
       </small>
@@ -79,19 +97,27 @@ const Folder = ({ formatted, editKeyInJson }: { formatted: NestedItem, editKeyIn
             placeholder="save as..."
             value={save}
             onChange={(e) => setSave(e.target.value)}
-            className="border"
+            className="border mx-2"
           />
-          <button className="border hover:bg-gray-200" type="submit" onClick={(e)  => {
-            e.preventDefault();
-            if (save) {
-              localStorage.setItem("courser", JSON.stringify({
-                ...JSON.parse(localStorage.getItem("courser") ?? "{}"),
-                [save]: formatted,
-              }));
-            }
-            alert("Saved!");
-            setSave("");
-          }}>
+          <button
+            className="border hover:bg-gray-200"
+            type="submit"
+            onClick={(e) => {
+              e.preventDefault();
+              if (save) {
+                localStorage.setItem(
+                  "courser",
+                  JSON.stringify({
+                    ...JSON.parse(localStorage.getItem("courser") ?? "{}"),
+                    [save]: formatted,
+                  })
+                );
+              }
+              setToast(true);
+              setTimeout(() => setToast(false), 2000);
+              setSave("");
+            }}
+          >
             save
           </button>
         </form>
@@ -119,7 +145,11 @@ const Collapsible = ({
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleEditKeySubmit = (e: React.FormEvent, key: string, path: string[]) => {
+  const handleEditKeySubmit = (
+    e: React.FormEvent,
+    key: string,
+    path: string[]
+  ) => {
     e.preventDefault();
     editKeyInJson([...path, key], newKey);
     setEditingKey(null);
@@ -137,9 +167,7 @@ const Collapsible = ({
             <li key={key} className="mb-2">
               {isLink ? (
                 isEditing ? (
-                  <form
-                    onSubmit={(e) => handleEditKeySubmit(e, key, path)}
-                  >
+                  <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
                     <input
                       value={newKey}
                       onChange={(e) => setNewKey(e.target.value)}
@@ -175,44 +203,40 @@ const Collapsible = ({
                     </button>
                   </span>
                 )
+              ) : isEditing ? (
+                <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
+                  <input
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setEditingKey(null);
+                      }
+                    }}
+                    onBlur={() => setEditingKey(null)}
+                    autoFocus
+                    className="border-gray-300 focus:ring-indigo-500"
+                    type="text"
+                  />
+                </form>
               ) : (
-                isEditing ? (
-                  <form
-                    onSubmit={(e) => handleEditKeySubmit(e, key, path)}
+                <>
+                  <span
+                    onClick={() => toggleCollapse(key)}
+                    className="cursor-pointer"
                   >
-                    <input
-                      value={newKey}
-                      onChange={(e) => setNewKey(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setEditingKey(null);
-                        }
-                      }}
-                      onBlur={() => setEditingKey(null)}
-                      autoFocus
-                      className="border-gray-300 focus:ring-indigo-500"
-                      type="text"
-                    />
-                  </form>                  
-                ) : (
-                  <>
-                    <span
-                      onClick={() => toggleCollapse(key)}
-                      className="cursor-pointer"
-                    >
-                      {collapsed[key] ? "📂" : "📁"} {key}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setEditingKey(key);
-                        setNewKey(key);
-                      }}
-                      className="ml-2 text-gray-500 opacity-50"
-                    >
-                      ✏️
-                    </button>
-                  </>
-                )
+                    {collapsed[key] ? "📂" : "📁"} {key}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setEditingKey(key);
+                      setNewKey(key);
+                    }}
+                    className="ml-2 text-gray-500 opacity-50"
+                  >
+                    ✏️
+                  </button>
+                </>
               )}
               {collapsed[key] && (
                 <Collapsible
@@ -246,7 +270,7 @@ export default function Home() {
   }, [dir]);
 
   useEffect(() => {
-    console.log('updated', json);
+    console.log("updated", json);
   }, [json]);
 
   // edit key string in JSON
@@ -271,15 +295,20 @@ export default function Home() {
   return (
     <>
       <section id="sidebar" className="absolute left-0 top-1/4">
-        {
-          Object.entries(JSON.parse(localStorage.getItem("courser") ?? "{}")).map(([key, nestedItem]) => (
-            <div key={key} className="my-2">
-              <small className="font-semibold" onClick={() => {
+        {Object.entries(
+          JSON.parse(localStorage.getItem("courser") ?? "{}")
+        ).map(([key, nestedItem]) => (
+          <div key={key} className="my-2">
+            <small
+              className="font-semibold"
+              onClick={() => {
                 setJson(nestedItem as NestedItem);
-              }}>{key}</small>
-            </div>
-          ))
-        }
+              }}
+            >
+              {key}
+            </small>
+          </div>
+        ))}
       </section>
       <main className="flex min-h-screen flex-col justify-start p-24">
         <div className="flex flex-col items-center mb-6">
