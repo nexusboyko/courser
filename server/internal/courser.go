@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
@@ -31,17 +32,20 @@ func extractDomain(src string) (string, error) {
 }
 
 var urls = make(map[string]bool)
+var lock = sync.RWMutex{}
 
 // run crawler
-func runCourser(src string) {
+func runCourser(src string) error {
 	domain, err := extractDomain(src)
 	if err != nil {
-		return
+		fmt.Println("ERR:", err)
+		return err
 	}
 
 	c := colly.NewCollector(
 		colly.AllowedDomains(domain),
 		colly.Async(true),
+		colly.MaxDepth(2),
 	)
 
 	// callback for hrefs (links)
@@ -49,18 +53,22 @@ func runCourser(src string) {
 		link := e.Attr("href")
 
 		// TODO: deal with "other" misc. links
-		// FIXME: ignore URLs with "?" or ";" in them
-		if strings.Contains(e.Request.AbsoluteURL(link), domain) {
+		if strings.Contains(e.Request.AbsoluteURL(link), domain) && !strings.Contains(link, "?") && !strings.Contains(link, ";") {
+			lock.Lock()
+			defer lock.Unlock()
 			urls[e.Request.AbsoluteURL(link)] = true
 		}
 
 		// visit link
-		c.Visit(e.Request.AbsoluteURL(link))
+		err := c.Visit(e.Request.AbsoluteURL(link))
+		if err != nil {
+			fmt.Println("ERR:", err)
+			return
+		}
 	})
 
-	// print on each request
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println(">", r.URL.String())
+		// fmt.Println(">", r.URL.String())
 	})
 
 	// deal with failed requests
@@ -69,14 +77,31 @@ func runCourser(src string) {
 
 		if r.StatusCode == 404 {
 			// remove from list if non-existent
+
+			lock.Lock()
+			defer lock.Unlock()
+			delete(urls, r.Request.URL.String())
+		}
+
+		if r.StatusCode == 403 {
+			// remove from list if forbidden
+
+			lock.Lock()
+			defer lock.Unlock()
 			delete(urls, r.Request.URL.String())
 		}
 	})
 
 	// run crawler
-	c.Visit(src)
+	err = c.Visit(src)
+	if err != nil {
+		fmt.Println("ERR:", err)
+		return err
+	}
 
 	c.Wait()
+
+	return nil
 }
 
 type RequestBody struct {
@@ -93,7 +118,11 @@ func (h *CourserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start := time.Now()
-	runCourser(body.URL)
+	err = runCourser(body.URL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	elapsed := time.Since(start)
 
 	fmt.Printf("found %d links in %s.\n\n", len(urls), elapsed)
@@ -109,15 +138,9 @@ func (h *CourserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// convert to json response
 	jsonData, err := json.Marshal(keys)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("ERR:", err)
 		return
 	}
-
-	// err = os.WriteFile("./urls.json", jsonData, 0644)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
