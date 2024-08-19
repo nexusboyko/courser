@@ -56,7 +56,17 @@ func runCourser(src string) error {
 		if strings.Contains(e.Request.AbsoluteURL(link), domain) && !strings.Contains(link, "?") && !strings.Contains(link, ";") {
 			lock.Lock()
 			defer lock.Unlock()
-			urls[e.Request.AbsoluteURL(link)] = true
+
+			// standardize non-file URL paths to end with "/"
+			u, err := url.Parse(e.Request.AbsoluteURL(link))
+			if err != nil {
+				fmt.Println("ERR:", err)
+				return
+			}
+			if !strings.HasSuffix(u.Path, "/") && !strings.Contains(u.Path, ".") {
+				u.Path += "/"
+			}
+			urls[u.String()] = true
 		}
 
 		// visit link
