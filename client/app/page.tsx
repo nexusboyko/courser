@@ -210,6 +210,11 @@ const Collapsible = ({
           const isLink = typeof value === "string";
           const isEditing = editingKey === key;
 
+          // open all folders by default
+          if (!isLink && collapsed[key] === undefined) {
+            setCollapsed((prev) => ({ ...prev, [key]: true }));
+          }
+
           return (
             <li key={key} className="mb-2">
               {isLink ? (
