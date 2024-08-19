@@ -401,16 +401,18 @@ export default function Home() {
       </section>
       <main className="flex min-h-screen flex-col justify-start p-24">
         <div className="flex flex-col items-center mb-6">
-          <h1 className="font-semibold flex gap-x-1 p-2 text-[#727bb9]">
+          <div className="flex items-center mb-2">
             <Image
-              src="https://github.com/nexusboyko/courser/assets/71574111/39e85446-bda3-44dd-a109-b8f327d42d6c"
+              src={"/courser.svg"}
               alt="courser"
-              width={15}
-              height={15}
+              width={30}
+              height={30}
               className="object-contain"
             />
-            courser
-          </h1>
+            <h1 className="font-bold flex text-lg p-2 text-[#727bb9]">
+              courser
+            </h1>
+          </div>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
