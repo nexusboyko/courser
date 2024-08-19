@@ -51,7 +51,7 @@ const Collapsible = ({
           }
 
           return (
-            <li key={key} className="mb-2 select-none">
+            <li key={key} id={key} className="mb-2 select-none">
               {isLink ? (
                 isEditing ? (
                   <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
@@ -148,13 +148,13 @@ const Collapsible = ({
 const CourseDirectory = ({
   formatted,
   editKeyInJson,
+  saveItem
 }: {
   formatted: NestedItem;
   editKeyInJson: (path: string[], newKey: string) => void;
+  saveItem: (name: string, json: NestedItem) => void
 }) => {
-  const [save, setSave] = React.useState("");
-  const [toast, setToast] = React.useState(false);
-  
+  const [savename, setSaveName] = React.useState(""); 
   const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>({});
 
   const toggleCollapse = (key: string) => {
@@ -166,17 +166,6 @@ const CourseDirectory = ({
 
   return (
     <>
-      {
-        <small
-          className={`absolute bottom-6 left-1/2 rounded-lg bg-green-500 text-white p-2 text-center transition-all duration-500 ease-in-out ${
-            toast
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 scale-90 translate-y-[50%]"
-          }`}
-        >
-          Saved!
-        </small>
-      }
       <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
         <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} collapsed={collapsed} toggleCollapse={toggleCollapse} />
       </small>
@@ -185,27 +174,17 @@ const CourseDirectory = ({
           <input
             type="text"
             placeholder="save as..."
-            value={save}
-            onChange={(e) => setSave(e.target.value)}
-            className="border-t border-b border-l p-2"
+            value={savename}
+            onChange={(e) => setSaveName(e.target.value)}
+            className="border-t border-b border-l p-2 rounded-lg outline-none"
           />
           <button
-            className="border p-2 hover:bg-gray-200"
+            className="border p-2 hover:bg-gray-200 rounded-lg"
             type="submit"
             onClick={(e) => {
               e.preventDefault();
-              if (save) {
-                localStorage.setItem(
-                  "courser",
-                  JSON.stringify({
-                    ...JSON.parse(localStorage.getItem("courser") ?? "{}"),
-                    [save]: formatted,
-                  })
-                );
-              }
-              setToast(true);
-              setTimeout(() => setToast(false), 2000);
-              setSave("");
+              saveItem(savename, formatted);
+              setSaveName("");
             }}
           >
             save
