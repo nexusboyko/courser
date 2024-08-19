@@ -39,107 +39,46 @@ const formatUrls = (urls: string[]): NestedItem => {
     if (!url) return;
 
     // Extract the path part from the URL string
-    const path = url.split('//')[1].split('/').slice(1);
+    const path = url.split("//")[1].split("/").slice(1);
     let currentLevel: NestedItem = root;
 
-    console.log(url)
-
     path.forEach((part, index) => {
-        // if (path.length - 2 >= 0 && index === path.length - 2 && !path[path.length - 1]) {
-        //   currentLevel[path[path.length - 2]] = url;
-        // } 
-        // else {
-        //   if (index === path.length - 1 && path[index]) {
-              
-        //         // Last part, should be a file
-        //         currentLevel[part] = url;
-        //   } else {
-        //       if (path[index]) { 
-        //         // Intermediate part, should be a directory
-        //         if (!currentLevel[part] || typeof currentLevel[part] === 'string') {
-        //             currentLevel[part] = {};
-        //         }
-        //         currentLevel = currentLevel[part] as NestedItem;
-        //       }
-        //   }
-        // }
+      // if (path.length - 2 >= 0 && index === path.length - 2 && !path[path.length - 1]) {
+      //   currentLevel[path[path.length - 2]] = url;
+      // }
+      // else {
+      //   if (index === path.length - 1 && path[index]) {
 
-        if (index === path.length - 1) {
-            // Last part, should be a file or a leaf node
-            if (part) {
-              if (!currentLevel[part]) {
-                  currentLevel[part] = url;
-              }
-            }
-            else {
-              currentLevel[path[path.length - 2]] = url;
-            }
-            
+      //         // Last part, should be a file
+      //         currentLevel[part] = url;
+      //   } else {
+      //       if (path[index]) {
+      //         // Intermediate part, should be a directory
+      //         if (!currentLevel[part] || typeof currentLevel[part] === 'string') {
+      //             currentLevel[part] = {};
+      //         }
+      //         currentLevel = currentLevel[part] as NestedItem;
+      //       }
+      //   }
+      // }
+
+      if (index === path.length - 1) {
+        // Last part, should be a file or a leaf node
+        if (part) {
+          if (!currentLevel[part]) {
+            currentLevel[part] = url;
+          }
         } else {
-            // Intermediate part, should be a directory
-            if (!currentLevel[part] || typeof currentLevel[part] === 'string') {
-                currentLevel[part] = {};
-            }
-            currentLevel = currentLevel[part] as NestedItem;            
+          currentLevel[path[path.length - 2]] = url;
         }
+      } else {
+        // Intermediate part, should be a directory
+        if (!currentLevel[part] || typeof currentLevel[part] === "string") {
+          currentLevel[part] = {};
+        }
+        currentLevel = currentLevel[part] as NestedItem;
+      }
     });
-
-    // OLD VERSION: no backing up/only reads valid URLs
-    // try {
-    //   const parsedUrl = new URL(url);
-    //   const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-
-    //   let currentLevel = root;
-
-    //   pathParts.forEach((part, index) => {
-    //     const isFile = part.includes(".");
-
-    //     if (isFile || index === pathParts.length - 1) {
-    //       currentLevel[part] = parsedUrl.href;
-    //     } else {
-    //       if (!currentLevel[part]) {
-    //         currentLevel[part] = {};
-    //       }
-    //       currentLevel = currentLevel[part] as NestedItem;
-    //     }
-    //   });
-    // } catch (e) {
-    //   console.error(`Invalid URL: ${url}`);
-    // }
-
-    // let parsedUrl: URL;
-    // let pathParts: string[] = [];
-
-    // // attempt to parse as URL type; else treat as string
-    // try {
-    //   parsedUrl = new URL(url);
-    //   pathParts = parsedUrl.pathname.split("/").filter(Boolean);
-    // } catch (error) {
-    //   console.log('can\'t parse as URL', url);
-    //   pathParts = url.split("/").filter(Boolean);
-    // }
-
-    // let currentLevel = root;
-
-    // pathParts.forEach((part, index) => {
-    //   const isFile = part.includes(".");
-
-    //   if (isFile || index === pathParts.length - 1) {
-    //     currentLevel[part] = parsedUrl.href;
-    //   } else {
-    //     if (typeof currentLevel[part] !== "object") {
-    //       const backup = currentLevel[part];
-    //       currentLevel[part] = {};
-    //       console.log(
-    //         "Backing up currentLevel to",
-    //         part,
-    //         typeof backup,
-    //         typeof currentLevel[part]
-    //       );
-    //     }
-    //     currentLevel = currentLevel[part] as NestedItem;
-    //   }
-    // });
   });
 
   return root;
@@ -152,7 +91,6 @@ const Folder = ({
   formatted: NestedItem;
   editKeyInJson: (path: string[], newKey: string) => void;
 }) => {
-  // const [nestedItem, setNestedItem] = useState<NestedItem>(formatted);
   const [save, setSave] = useState("");
   const [toast, setToast] = useState(false);
 
@@ -179,10 +117,10 @@ const Folder = ({
             placeholder="save as..."
             value={save}
             onChange={(e) => setSave(e.target.value)}
-            className="border mx-2"
+            className="border-t border-b border-l p-2"
           />
           <button
-            className="border hover:bg-gray-200"
+            className="border p-2 hover:bg-gray-200"
             type="submit"
             onClick={(e) => {
               e.preventDefault();
@@ -239,16 +177,34 @@ const Collapsible = ({
 
   const countItems = (value: NestedItem): number => {
     return Object.values(value).reduce(
-      (sum, el) =>
-        typeof el === "string" ? sum + 1 : sum + countItems(el),
+      (sum, el) => (typeof el === "string" ? sum + 1 : sum + countItems(el)),
       0
-    )
-  }
+    );
+  };
+
+  const naturalSort = (a: string, b: string): number => {
+    const extractParts = (str: string) =>
+      str
+        .split(/(\d+)/)
+        .map((part) => (isNaN(parseInt(part)) ? part : parseInt(part)));
+
+    const partsA = extractParts(a);
+    const partsB = extractParts(b);
+
+    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+      if (partsA[i] === undefined) return -1;
+      if (partsB[i] === undefined) return 1;
+      if (partsA[i] < partsB[i]) return -1;
+      if (partsA[i] > partsB[i]) return 1;
+    }
+    return 0;
+  };
 
   return (
     <ul className={`ms-10`}>
       {Object.entries(nestedItem)
-        .sort(([A], [B]) => A.localeCompare(B))
+        // .sort(([A], [B]) => A.localeCompare(B))
+        .sort(([A], [B]) => naturalSort(A, B))
         .map(([key, value]) => {
           const isLink = typeof value === "string";
           const isEditing = editingKey === key;
@@ -315,7 +271,10 @@ const Collapsible = ({
                     onClick={() => toggleCollapse(key)}
                     className="cursor-pointer"
                   >
-                    {collapsed[key] ? "📂" : "📁"} {key} <span className="text-xs text-gray-400">({countItems(value as NestedItem)})</span>
+                    {collapsed[key] ? "📂" : "📁"} {key}{" "}
+                    <span className="text-xs text-gray-400">
+                      ({countItems(value as NestedItem)})
+                    </span>
                   </span>
                   <button
                     onClick={() => {
@@ -384,15 +343,19 @@ export default function Home() {
 
   return (
     <>
-      <section id="sidebar" className="absolute left-0 top-1/4 ml-2 border-t border-l border-r">
+      <section
+        id="sidebar"
+        className="absolute left-0 top-1/4 ml-2 border-t border-l border-r"
+      >
         {Object.entries(
           JSON.parse(localStorage.getItem("courser") ?? "{}")
         ).map(([key, nestedItem]) => (
-          <div key={key} className="p-2 border-b hover:bg-gray-200 cursor-pointer" onClick={() => {
-            setJson(nestedItem as NestedItem);
-          }}>
+          <div key={key} className="border-b flex justify-between">
             <small
-              className="font-semibold"
+              className="p-2 w-full hover:bg-gray-200 cursor-pointer flex justify-center items-center"
+              onClick={() => {
+                setJson(nestedItem as NestedItem);
+              }}
             >
               {key}
             </small>
@@ -417,23 +380,28 @@ export default function Home() {
             onSubmit={async (e) => {
               e.preventDefault();
               setLoading(true);
+              setJson({});
               setDir(await crawl(url));
               setLoading(false);
             }}
+            className="flex items-center"
           >
-            <label htmlFor="url">URL</label>
+            {/* <label htmlFor="url" className="border p-2">URL</label> */}
+            <div className="border p-2">
+              <label htmlFor="url">URL</label>
+            </div>
             <input
               type="text"
               name="url"
-              className="border mx-2"
+              className="m-0 border-t border-b p-2"
               onChange={(e) => setUrl(e.target.value)}
               value={url}
             />
-            <button type="submit" className="border hover:bg-gray-200">
-              crawl
+            <button type="submit" className="border hover:bg-gray-200 p-2">
+              submit
             </button>
           </form>
-          {loading && <small className="pt-2">loading. . .</small>}
+          {loading && <p className="p-3 text-base animate-spin">⏳</p>}
         </div>
         <Folder formatted={json} editKeyInJson={editKeyInJson} />
       </main>
