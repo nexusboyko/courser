@@ -37,27 +37,109 @@ const formatUrls = (urls: string[]): NestedItem => {
 
   urls?.forEach((url) => {
     if (!url) return;
-    try {
-      const parsedUrl = new URL(url);
-      const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
 
-      let currentLevel = root;
+    // Extract the path part from the URL string
+    const path = url.split('//')[1].split('/').slice(1);
+    let currentLevel: NestedItem = root;
 
-      pathParts.forEach((part, index) => {
-        const isFile = part.includes(".");
+    console.log(url)
 
-        if (isFile || index === pathParts.length - 1) {
-          currentLevel[part] = parsedUrl.href;
+    path.forEach((part, index) => {
+        // if (path.length - 2 >= 0 && index === path.length - 2 && !path[path.length - 1]) {
+        //   currentLevel[path[path.length - 2]] = url;
+        // } 
+        // else {
+        //   if (index === path.length - 1 && path[index]) {
+              
+        //         // Last part, should be a file
+        //         currentLevel[part] = url;
+        //   } else {
+        //       if (path[index]) { 
+        //         // Intermediate part, should be a directory
+        //         if (!currentLevel[part] || typeof currentLevel[part] === 'string') {
+        //             currentLevel[part] = {};
+        //         }
+        //         currentLevel = currentLevel[part] as NestedItem;
+        //       }
+        //   }
+        // }
+
+        if (index === path.length - 1) {
+            // Last part, should be a file or a leaf node
+            if (part) {
+              if (!currentLevel[part]) {
+                  currentLevel[part] = url;
+              }
+            }
+            else {
+              currentLevel[path[path.length - 2]] = url;
+            }
+            
         } else {
-          if (!currentLevel[part]) {
-            currentLevel[part] = {};
-          }
-          currentLevel = currentLevel[part] as NestedItem;
+            // Intermediate part, should be a directory
+            if (!currentLevel[part] || typeof currentLevel[part] === 'string') {
+                currentLevel[part] = {};
+            }
+            currentLevel = currentLevel[part] as NestedItem;            
         }
-      });
-    } catch (e) {
-      console.error(`Invalid URL: ${url}`);
-    }
+    });
+
+    // OLD VERSION: no backing up/only reads valid URLs
+    // try {
+    //   const parsedUrl = new URL(url);
+    //   const pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+    //   let currentLevel = root;
+
+    //   pathParts.forEach((part, index) => {
+    //     const isFile = part.includes(".");
+
+    //     if (isFile || index === pathParts.length - 1) {
+    //       currentLevel[part] = parsedUrl.href;
+    //     } else {
+    //       if (!currentLevel[part]) {
+    //         currentLevel[part] = {};
+    //       }
+    //       currentLevel = currentLevel[part] as NestedItem;
+    //     }
+    //   });
+    // } catch (e) {
+    //   console.error(`Invalid URL: ${url}`);
+    // }
+
+    // let parsedUrl: URL;
+    // let pathParts: string[] = [];
+
+    // // attempt to parse as URL type; else treat as string
+    // try {
+    //   parsedUrl = new URL(url);
+    //   pathParts = parsedUrl.pathname.split("/").filter(Boolean);
+    // } catch (error) {
+    //   console.log('can\'t parse as URL', url);
+    //   pathParts = url.split("/").filter(Boolean);
+    // }
+
+    // let currentLevel = root;
+
+    // pathParts.forEach((part, index) => {
+    //   const isFile = part.includes(".");
+
+    //   if (isFile || index === pathParts.length - 1) {
+    //     currentLevel[part] = parsedUrl.href;
+    //   } else {
+    //     if (typeof currentLevel[part] !== "object") {
+    //       const backup = currentLevel[part];
+    //       currentLevel[part] = {};
+    //       console.log(
+    //         "Backing up currentLevel to",
+    //         part,
+    //         typeof backup,
+    //         typeof currentLevel[part]
+    //       );
+    //     }
+    //     currentLevel = currentLevel[part] as NestedItem;
+    //   }
+    // });
   });
 
   return root;
@@ -294,11 +376,11 @@ export default function Home() {
 
   return (
     <>
-      <section id="sidebar" className="absolute left-0 top-1/4">
+      <section id="sidebar" className="absolute left-0 top-1/4 ml-2 border-t border-l border-r">
         {Object.entries(
           JSON.parse(localStorage.getItem("courser") ?? "{}")
         ).map(([key, nestedItem]) => (
-          <div key={key} className="my-2">
+          <div key={key} className="p-2 border-b">
             <small
               className="font-semibold"
               onClick={() => {
