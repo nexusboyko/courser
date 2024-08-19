@@ -148,11 +148,13 @@ const Collapsible = ({
 const CourseDirectory = ({
   formatted,
   editKeyInJson,
-  saveItem
+  saveItem,
+  loader
 }: {
   formatted: NestedItem;
   editKeyInJson: (path: string[], newKey: string) => void;
   saveItem: (name: string, json: NestedItem) => void
+  loader: React.ReactNode
 }) => {
   const [savename, setSaveName] = React.useState(""); 
   const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>({});
@@ -166,10 +168,11 @@ const CourseDirectory = ({
 
   return (
     <>
-      <small className="p-10 h-[60vh] w-[50vw] mx-auto overflow-y-scroll">
+      <small className="p-10 h-[70vh] w-[40vw] mx-auto overflow-y-scroll bg-slate-900 rounded-lg text-white">
+        {loader && <div className="w-full h-full flex justify-center items-center">{loader}</div>}
         <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} collapsed={collapsed} toggleCollapse={toggleCollapse} />
       </small>
-      <div className="flex justify-center">
+      <div className="flex justify-center p-3">
         <form>
           <input
             type="text"
