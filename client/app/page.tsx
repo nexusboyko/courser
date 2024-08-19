@@ -1,5 +1,6 @@
 "use client";
 
+import CoursesMenu from "@/components/CoursesMenu";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -343,42 +344,7 @@ export default function Home() {
 
   return (
     <>
-      <section
-        id="sidebar"
-        className="absolute left-0 top-1/4 ml-2 border-t border-l border-r"
-      >
-        {Object.entries(
-          JSON.parse(localStorage.getItem("courser") ?? "{}")
-        ).map(([key, nestedItem]) => (
-          <div key={key} className="border-b flex justify-between">
-            <small
-              className="p-2 w-full hover:bg-gray-200 cursor-pointer flex justify-center items-center"
-              onClick={() => {
-                setJson(nestedItem as NestedItem);
-              }}
-            >
-              {key}
-            </small>
-            <button
-              className="border-l p-2 hover:bg-red-200 cursor-pointer"
-              onClick={() => {
-                localStorage.setItem(
-                  "courser",
-                  JSON.stringify(
-                    Object.fromEntries(
-                      Object.entries(
-                        JSON.parse(localStorage.getItem("courser") ?? "{}")
-                      ).filter(([k]) => k !== key)
-                    )
-                  )
-                );
-              }}
-            >
-              🗑️
-            </button>
-          </div>
-        ))}
-      </section>
+      <CoursesMenu setJson={setJson} />
       <main className="flex min-h-screen flex-col justify-start p-24">
         <div className="flex flex-col items-center mb-6">
           <div className="flex items-center mb-2">
