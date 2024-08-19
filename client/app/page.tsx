@@ -359,6 +359,23 @@ export default function Home() {
             >
               {key}
             </small>
+            <button
+              className="border-l p-2 hover:bg-red-200 cursor-pointer"
+              onClick={() => {
+                localStorage.setItem(
+                  "courser",
+                  JSON.stringify(
+                    Object.fromEntries(
+                      Object.entries(
+                        JSON.parse(localStorage.getItem("courser") ?? "{}")
+                      ).filter(([k]) => k !== key)
+                    )
+                  )
+                );
+              }}
+            >
+              🗑️
+            </button>
           </div>
         ))}
       </section>
