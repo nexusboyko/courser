@@ -237,6 +237,14 @@ const Collapsible = ({
     setEditingKey(null);
   };
 
+  const countItems = (value: NestedItem): number => {
+    return Object.values(value).reduce(
+      (sum, el) =>
+        typeof el === "string" ? sum + 1 : sum + countItems(el),
+      0
+    )
+  }
+
   return (
     <ul className={`ms-10`}>
       {Object.entries(nestedItem)
@@ -307,7 +315,7 @@ const Collapsible = ({
                     onClick={() => toggleCollapse(key)}
                     className="cursor-pointer"
                   >
-                    {collapsed[key] ? "📂" : "📁"} {key}
+                    {collapsed[key] ? "📂" : "📁"} {key} <span className="text-xs text-gray-400">({countItems(value as NestedItem)})</span>
                   </span>
                   <button
                     onClick={() => {
@@ -380,12 +388,11 @@ export default function Home() {
         {Object.entries(
           JSON.parse(localStorage.getItem("courser") ?? "{}")
         ).map(([key, nestedItem]) => (
-          <div key={key} className="p-2 border-b">
+          <div key={key} className="p-2 border-b hover:bg-gray-200 cursor-pointer" onClick={() => {
+            setJson(nestedItem as NestedItem);
+          }}>
             <small
               className="font-semibold"
-              onClick={() => {
-                setJson(nestedItem as NestedItem);
-              }}
             >
               {key}
             </small>
