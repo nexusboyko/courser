@@ -70,8 +70,8 @@ const CourseSearchBox = ({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          setLoading(true);
           setJson({});
+          setLoading(true);
           setDir(await crawl(url));
           setLoading(false);
         }}
@@ -177,7 +177,7 @@ export default function Home() {
           setDir={setDir}
         />
 
-        <CoursesMenu setJson={setJson} />
+        <CoursesMenu setJson={setJson} toast={toast} />
         <CourseDirectory
           formatted={json}
           editKeyInJson={editKeyInJson}

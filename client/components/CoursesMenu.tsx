@@ -7,8 +7,10 @@ import { NestedItem } from "@/lib/utils";
 
 const CoursesMenu = ({
   setJson,
+  toast
 }: {
   setJson: React.Dispatch<React.SetStateAction<NestedItem>>;
+  toast: boolean;
 }) => {
   const [items, setItems] = React.useState<NestedItem>({});
   const [editingItem, setEditingItem] = React.useState<string>("");
@@ -20,7 +22,7 @@ const CoursesMenu = ({
       const saved = localStorage.getItem("courser");
       setItems(saved ? JSON.parse(saved) : {});
     }
-  }, []);
+  }, [toast]);
 
   const deleteItem = (key: string) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this item?");
