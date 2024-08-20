@@ -63,7 +63,7 @@ func runCourser(src string) error {
 			// standardize non-file URL paths to end with "/"
 			u, err := url.Parse(e.Request.AbsoluteURL(link))
 			if err != nil {
-				fmt.Println("ERR:", err)
+				fmt.Println("Could not parse URL:", err)
 				return
 			}
 			if !strings.HasSuffix(u.Path, "/") && !strings.Contains(u.Path, ".") {
@@ -75,40 +75,39 @@ func runCourser(src string) error {
 		// visit link
 		err := c.Visit(e.Request.AbsoluteURL(link))
 		if err != nil {
-			fmt.Println("ERR:", err)
+			fmt.Println("Could not visit URL:", err)
 			return
 		}
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		// fmt.Println(">", r.URL.String())
+		fmt.Println(">", r.URL.Path)
 	})
 
 	// deal with failed requests
 	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("\t ! %s failed with status code: %d\n", r.Request.URL, r.StatusCode)
+		fmt.Printf("! Failed with status code: %d: %s\n", r.StatusCode, r.Request.URL)
 
 		if r.StatusCode == 404 {
 			// remove from list if non-existent
-
 			lock.Lock()
 			defer lock.Unlock()
 			delete(urls, r.Request.URL.String())
 		}
 
 		if r.StatusCode == 403 {
-			// remove from list if forbidden
-
-			lock.Lock()
-			defer lock.Unlock()
-			delete(urls, r.Request.URL.String())
+			// 	// remove from list if forbidden
+			// 	lock.Lock()
+			// 	defer lock.Unlock()
+			// 	delete(urls, r.Request.URL.String())
+			fmt.Println("Forbidden URL:", r.Request.URL)
 		}
 	})
 
 	// run crawler
 	err = c.Visit(src)
 	if err != nil {
-		fmt.Println("ERR:", err)
+		fmt.Println("Could not visit URL:", err)
 		return err
 	}
 
