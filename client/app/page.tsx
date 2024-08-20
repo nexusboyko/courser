@@ -18,7 +18,7 @@ const crawl = async (url: string): Promise<Array<string>> => {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_API_URL_DEV}/api/courser`, {
+      const res = await fetch(`${process.env.NEXT_ENV === "production" ? process.env.NEXT_API_URL_PROD : process.env.NEXT_API_URL_DEV}/api/courser`, {
         method: "POST",
         body: JSON.stringify({
           url: url,
