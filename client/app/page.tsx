@@ -7,28 +7,37 @@ import Image from "next/image";
 import CoursesMenu from "@/components/CoursesMenu";
 import CourseDirectory from "@/components/CourseDirectory";
 
-const crawl = async (url: string) => {
+const crawl = async (url: string): Promise<Array<string>> => {
   if (url) {
     try {
-      const res = await fetch(
-        `${
-          process.env.NEXT_API_URL_DEV || "http://localhost:8080"
-        }/api/courser`,
-        {
-          method: "POST",
-          body: JSON.stringify({ url }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const validURL = new URL(url);
+    } catch (error) {
+      console.error("Invalid URL: ", error);
+
+      return [];
+    }
+
+    try {
+      const res = await fetch(`${process.env.NEXT_API_URL_DEV}/api/courser`, {
+        method: "POST",
+        body: JSON.stringify({
+          url: url,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       return res.json();
     } catch (error) {
       console.error(error);
+
+      return [];
     }
   } else {
     console.error("No URL provided");
+
+    return [];
   }
 };
 
@@ -49,6 +58,7 @@ const CourseSearchBox = ({
     <div className="flex flex-col items-center p-3">
       <div className="flex items-center mb-2">
         <Image
+          priority
           src={"/courser.svg"}
           alt="courser"
           width={30}
@@ -77,7 +87,10 @@ const CourseSearchBox = ({
           onChange={(e) => setUrl(e.target.value)}
           value={url}
         />
-        <button type="submit" className="border hover:bg-gray-200 p-2 rounded-lg">
+        <button
+          type="submit"
+          className="border hover:bg-gray-200 p-2 rounded-lg"
+        >
           submit
         </button>
       </form>
@@ -106,9 +119,9 @@ export default function Home() {
 
   // testing
   useEffect(() => {
-    console.log('updated', json)
-  }, [json])
-  
+    console.log("updated", json);
+  }, [json]);
+
   // edit key string in JSON
   const editKeyInJson = (path: string[], newKey: string) => {
     const updateNestedItem = (item: NestedItem, keys: string[]): NestedItem => {
@@ -163,17 +176,25 @@ export default function Home() {
           setJson={setJson}
           setDir={setDir}
         />
-        
+
         <CoursesMenu setJson={setJson} />
         <CourseDirectory
           formatted={json}
           editKeyInJson={editKeyInJson}
           saveItem={saveItem}
-          loader={(loading || (dir.length !== 0 && Object.keys(json).length === 0)) && <div className="w-full flex justify-center items-center opacity-75 text-sm">
-            {loading && <small>scraping...</small>}
-            {dir.length !== 0 && Object.keys(json).length === 0 && <small>formatting...</small>}
-            <small className="animate-spin mx-1">⏳</small>
-          </div>}
+          loader={
+            dir &&
+            (loading ||
+              (dir.length !== 0 && Object.keys(json).length === 0)) && (
+              <div className="w-full flex justify-center items-center opacity-75 text-sm">
+                {loading && <small>scraping...</small>}
+                {dir.length !== 0 && Object.keys(json).length === 0 && (
+                  <small>formatting...</small>
+                )}
+                <small className="animate-spin mx-1">⏳</small>
+              </div>
+            )
+          }
         />
       </main>
     </>
