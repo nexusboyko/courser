@@ -36,6 +36,9 @@ var lock = sync.RWMutex{}
 
 // run crawler
 func runCourser(src string) error {
+	// reset
+	urls = map[string]bool{}
+
 	domain, err := extractDomain(src)
 	if err != nil {
 		fmt.Println("ERR:", err)
