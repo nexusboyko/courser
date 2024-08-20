@@ -71,13 +71,15 @@ const Collapsible = ({
                   </form>
                 ) : (
                   <span>
+                    {"📄"}
+                    {' '}
                     <a
                       href={value as string}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600"
+                      className="text-blue-600 hover:underline"
                     >
-                      {"📄"} {key}
+                      {key}
                     </a>
                     <button
                       onClick={() => {
@@ -108,14 +110,17 @@ const Collapsible = ({
                 </form>
               ) : (
                 <>
+                  {collapsed[key] ? "📂" : "📁"}
+                  {' '}
                   <span
                     onClick={() => toggleCollapse(key)}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:underline"
                   >
-                    {collapsed[key] ? "📂" : "📁"} {key}{" "}
-                    <span className="text-xs text-gray-400">
-                      ({countItems(value as NestedItem)})
-                    </span>
+                    {key}
+                  </span>
+                  {" "}
+                  <span className="text-xs text-gray-400">
+                    ({countItems(value as NestedItem)})
                   </span>
                   <button
                     onClick={() => {
@@ -168,7 +173,7 @@ const CourseDirectory = ({
 
   return (
     <>
-      <small className="p-10 h-[70vh] w-[40vw] mx-auto overflow-y-scroll bg-slate-900 rounded-lg text-white">
+      <small className="py-8 h-[70vh] w-[40vw] mx-auto overflow-y-scroll bg-slate-900 rounded-lg text-white">
         {loader && <div className="w-full h-full flex justify-center items-center">{loader}</div>}
         <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} collapsed={collapsed} toggleCollapse={toggleCollapse} />
       </small>
