@@ -8,14 +8,14 @@ const Collapsible = ({
   path = [],
   editKeyInJson,
   collapsed,
-  toggleCollapse
+  toggleCollapse,
 }: {
   nestedItem: NestedItem;
   level?: number;
   path?: string[];
   editKeyInJson: (path: string[], newKey: string) => void;
   collapsed: { [key: string]: boolean };
-  toggleCollapse: (key: string) => void
+  toggleCollapse: (key: string) => void;
 }) => {
   const [editingKey, setEditingKey] = React.useState<string | null>(null);
   const [newKey, setNewKey] = React.useState("");
@@ -47,91 +47,94 @@ const Collapsible = ({
 
           // open all folders by default
           if (!isLink && collapsed[key] === undefined) {
-            toggleCollapse(key)
+            toggleCollapse(key);
           }
 
           return (
             <li key={key} id={key} className="mb-2 select-none">
               {isLink ? (
-                isEditing ? (
-                  <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
-                    <input
-                      value={newKey}
-                      onChange={(e) => setNewKey(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setEditingKey(null);
-                        }
-                      }}
-                      onBlur={() => setEditingKey(null)}
-                      autoFocus
-                      className="border-gray-300 focus:ring-indigo-500"
-                      type="text"
-                    />
-                  </form>
-                ) : (
-                  <span>
-                    {"📄"}
-                    {' '}
-                    <a
-                      href={value as string}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {key}
-                    </a>
-                    <button
-                      onClick={() => {
-                        setEditingKey(key);
-                        setNewKey(key);
-                      }}
-                      className="ml-2 text-gray-500 opacity-50"
-                    >
-                      ✏️
-                    </button>
-                  </span>
-                )
-              ) : isEditing ? (
-                <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
-                  <input
-                    value={newKey}
-                    onChange={(e) => setNewKey(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setEditingKey(null);
-                      }
-                    }}
-                    onBlur={() => setEditingKey(null)}
-                    autoFocus
-                    className="border-gray-300 focus:ring-indigo-500"
-                    type="text"
-                  />
-                </form>
+                <span className="flex items-center">
+                  <span className="mr-1">{"📄"}</span>
+                  {isEditing ? (
+                    <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
+                      <input
+                        value={newKey}
+                        onChange={(e) => setNewKey(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setEditingKey(null);
+                          }
+                        }}
+                        onBlur={() => setEditingKey(null)}
+                        autoFocus
+                        className="w-[15ch] px-2 outline-none focus:ring-indigo-500 focus:ring-1 bg-slate-900 rounded-lg text-white"
+                        type="text"
+                      />
+                    </form>
+                  ) : (
+                    <>
+                      <a
+                        href={value as string}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {key}
+                      </a>
+                      <button
+                        onClick={() => {
+                          setEditingKey(key);
+                          setNewKey(key);
+                        }}
+                        className="ml-2 text-gray-500 opacity-50"
+                      >
+                        ✏️
+                      </button>
+                    </>
+                  )}{" "}
+                </span>
               ) : (
-                <>
-                  {collapsed[key] ? "📂" : "📁"}
-                  {' '}
-                  <span
-                    onClick={() => toggleCollapse(key)}
-                    className="cursor-pointer hover:underline"
-                  >
-                    {key}
-                  </span>
-                  {" "}
-                  <span className="text-xs text-gray-400">
-                    ({countItems(value as NestedItem)})
-                  </span>
-                  <button
-                    onClick={() => {
-                      setEditingKey(key);
-                      setNewKey(key);
-                    }}
-                    className="ml-2 text-gray-500 opacity-50"
-                  >
-                    ✏️
-                  </button>
-                </>
+                <span className="flex items-center">
+                  <span className="mr-1">{collapsed[key] ? "📂" : "📁"}</span>
+                  {isEditing ? (
+                    <form onSubmit={(e) => handleEditKeySubmit(e, key, path)}>
+                      <input
+                        value={newKey}
+                        onChange={(e) => setNewKey(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            setEditingKey(null);
+                          }
+                        }}
+                        onBlur={() => setEditingKey(null)}
+                        autoFocus
+                        className="w-[15ch] px-2 outline-none focus:ring-indigo-500 focus:ring-1 bg-slate-900 rounded-lg text-white"
+                        type="text"
+                      />
+                    </form>
+                  ) : (
+                    <>
+                      <span
+                        onClick={() => toggleCollapse(key)}
+                        className="cursor-pointer hover:underline"
+                      >
+                        {key}
+                      </span>{" "}
+                      <span className="text-xs text-gray-400 ms-1">
+                        ({countItems(value as NestedItem)})
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditingKey(key);
+                          setNewKey(key);
+                        }}
+                        className="ml-2 text-gray-500 opacity-50"
+                      >
+                        ✏️
+                      </button>
+                    </>
+                  )}
+                </span>
               )}
               {!isLink && collapsed[key] && (
                 <Collapsible
@@ -154,19 +157,22 @@ const CourseDirectory = ({
   formatted,
   editKeyInJson,
   saveItem,
-  loader
+  loader,
 }: {
   formatted: NestedItem;
   editKeyInJson: (path: string[], newKey: string) => void;
-  saveItem: (name: string, json: NestedItem) => void
-  loader: React.ReactNode
+  saveItem: (name: string, json: NestedItem) => void;
+  loader: React.ReactNode;
 }) => {
-  const [savename, setSaveName] = React.useState(""); 
-  const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>({});
+  const [savename, setSaveName] = React.useState("");
+  const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   const toggleCollapse = (key: string) => {
     setTimeout(() => {
-      if (collapsed[key]) setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+      if (collapsed[key])
+        setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
       else setCollapsed({ ...collapsed, [key]: true });
     }, 0);
   };
@@ -174,8 +180,17 @@ const CourseDirectory = ({
   return (
     <>
       <small className="py-8 h-[70vh] w-[40vw] mx-auto overflow-y-scroll bg-slate-900 rounded-lg text-white">
-        {loader && <div className="w-full h-full flex justify-center items-center">{loader}</div>}
-        <Collapsible nestedItem={formatted} editKeyInJson={editKeyInJson} collapsed={collapsed} toggleCollapse={toggleCollapse} />
+        {loader && (
+          <div className="w-full h-full flex justify-center items-center">
+            {loader}
+          </div>
+        )}
+        <Collapsible
+          nestedItem={formatted}
+          editKeyInJson={editKeyInJson}
+          collapsed={collapsed}
+          toggleCollapse={toggleCollapse}
+        />
       </small>
       <div className="flex justify-center p-3">
         <form>
