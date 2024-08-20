@@ -20,7 +20,7 @@ const CoursesMenu = ({
       const saved = localStorage.getItem("courser");
       setItems(saved ? JSON.parse(saved) : {});
     }
-  }, [window]);
+  }, []);
 
   const deleteItem = (key: string) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this item?");
