@@ -85,13 +85,16 @@ const CoursesMenu = ({
       id="courses-menu"
       className="absolute left-0 top-1/4 ml-2"
     >
-      <div className="flex flex-col justify-center items-center p-2 text-base">
-        <p className="text-2xl">🗃️</p>
-        <p className="text-center text-base font-semibold">my courses</p>
-      </div>
+      {
+        Object.keys(items).length !== 0 &&
+        <div className="flex flex-col justify-center items-center p-2 text-base">
+          <p className="text-2xl">🗃️</p>
+          <p className="text-center text-base font-semibold">my courses</p>
+        </div>
+      }
       <div className="border-t border-l border-r rounded-lg">
         {Object.entries(items).map(([item, json]) => (
-          <div key={item} className="border-b rounded-b-lg flex justify-between">
+          <div key={item} className="border-b last:rounded-b-lg flex justify-between">
             <div className="m-0 p-0 w-[15ch] flex justify-center items-center text-center hover:bg-gray-200">
               {
                 editingItem === item ? (
