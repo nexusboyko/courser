@@ -197,7 +197,7 @@ export default function Home() {
       <main className="flex min-h-screen flex-col justify-start items-center p-3">
         <Image
           priority
-          src={"/courser.svg"}
+          src={`${process.env.NEXT_ENV === "production" ? '/courser/courser.svg' : '/courser.svg'}`}
           alt="courser"
           width={30}
           height={30}
