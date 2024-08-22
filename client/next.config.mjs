@@ -6,7 +6,8 @@ const nextConfig = {
 
   env: {
     NEXT_ENV: "production",
-    NEXT_API_URL_PROD: "http://165.1.75.49:8080",
+    // NEXT_ENV: "development",
+    NEXT_API_URL_PROD: "https://165.1.75.49:8080",
     NEXT_API_URL_DEV: "http://localhost:8080",
   }
 };
