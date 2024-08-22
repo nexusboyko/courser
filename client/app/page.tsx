@@ -6,6 +6,7 @@ import { NestedItem, formatUrls } from "@/lib/utils";
 import Image from "next/image";
 import CoursesMenu from "@/components/CoursesMenu";
 import CourseDirectory from "@/components/CourseDirectory";
+import Menu from "./Menu";
 
 const crawl = async (url: string): Promise<Array<string>> => {
   if (url) {
@@ -18,15 +19,22 @@ const crawl = async (url: string): Promise<Array<string>> => {
     }
 
     try {
-      const res = await fetch(`${process.env.NEXT_ENV === "production" ? process.env.NEXT_API_URL_PROD : process.env.NEXT_API_URL_DEV}/api/courser`, {
-        method: "POST",
-        body: JSON.stringify({
-          url: url,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+        `${
+          process.env.NEXT_ENV === "production"
+            ? process.env.NEXT_API_URL_PROD
+            : process.env.NEXT_API_URL_DEV
+        }/api/courser`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            url: url,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       return res.json();
     } catch (error) {
@@ -47,27 +55,22 @@ const CourseSearchBox = ({
   setLoading,
   setJson,
   setDir,
+  isDarkMode,
+  setIsDarkMode,
 }: {
   url: string;
   setUrl: React.Dispatch<React.SetStateAction<string>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setJson: React.Dispatch<React.SetStateAction<NestedItem>>;
   setDir: React.Dispatch<React.SetStateAction<Array<string>>>;
+  isDarkMode: boolean;
+  setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   return (
-    <div className="flex flex-col items-center p-3">
-      <div className="flex items-center mb-2">
-        <Image
-          priority
-          src={"/courser.svg"}
-          alt="courser"
-          width={30}
-          height={30}
-          className="object-contain w-[50px] h-auto aspect-square"
-        />
-        {/* <h1 className="font-bold flex text-lg p-2 text-[#727bb9]">courser</h1> */}
-      </div>
+    <>
       <form
+        action=""
+        className="flex w-full bg-transparent"
         onSubmit={async (e) => {
           e.preventDefault();
           setJson({});
@@ -75,30 +78,47 @@ const CourseSearchBox = ({
           setDir(await crawl(url));
           setLoading(false);
         }}
-        className="flex items-center"
       >
-        <div className="border p-2 rounded-l-lg">
-          <label htmlFor="url">URL</label>
-        </div>
         <input
           type="text"
-          name="url"
-          className="m-0 border-t border-b p-2 rounded-r-lg outline-none"
+          className={`text-base w-full bg-transparent px-4 py-2 outline-none border-slate-800 ${
+            isDarkMode ? "hover:bg-slate-800" : "hover:bg-gray-200"
+          }`}
+          placeholder="Enter your course link..."
           onChange={(e) => setUrl(e.target.value)}
           value={url}
         />
-        <button
-          type="submit"
-          className="border hover:bg-gray-200 p-2 rounded-lg"
-        >
-          submit
-        </button>
       </form>
-    </div>
+      <button
+        className={`border-l p-2 ${
+          isDarkMode
+            ? "bg-[#111c35] text-white border-slate-800 hover:bg-slate-800"
+            : "bg-gray-50 text-black border-gray-200 hover:bg-gray-200"
+        }`}
+        onClick={async (e) => {
+          e.preventDefault();
+          setJson({});
+          setLoading(true);
+          setDir(await crawl(url));
+          setLoading(false);
+        }}
+      >
+        🔍
+      </button>
+      <button
+        className={`border-l p-2 ${
+          isDarkMode
+            ? "bg-[#111c35] text-white border-slate-800 hover:bg-slate-800"
+            : "bg-gray-50 text-black border-gray-200 hover:bg-gray-200"
+        } rounded-tr-lg`}
+        onClick={() => setIsDarkMode((prev) => !prev)}
+      >
+        {isDarkMode ? "☀️" : "🌙"}
+      </button>
+    </>
   );
 };
 
-// https://courses.cs.washington.edu/courses/cse473/24sp/
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   // show toast message
@@ -110,6 +130,12 @@ export default function Home() {
   const [url, setUrl] = useState<string>("");
   // nested "directory" JSON
   const [json, setJson] = useState<NestedItem>({});
+
+  // item save name
+  const [savename, setSaveName] = React.useState("");
+
+  // dark mode
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
 
   useEffect(() => {
     setTimeout(() => {
@@ -168,34 +194,83 @@ export default function Home() {
           Saved!
         </small>
       }
-      <main className="flex min-h-screen flex-col justify-start p-3">
-        <CourseSearchBox
-          url={url}
-          setUrl={setUrl}
-          setLoading={setLoading}
-          setJson={setJson}
-          setDir={setDir}
+      <main className="flex min-h-screen flex-col justify-start items-center p-3">
+        <Image
+          priority
+          src={"/courser.svg"}
+          alt="courser"
+          width={30}
+          height={30}
+          className="object-contain w-[50px] h-auto aspect-square m-4"
         />
 
-        <CoursesMenu setJson={setJson} toast={toast} />
-        <CourseDirectory
-          formatted={json}
-          editKeyInJson={editKeyInJson}
-          saveItem={saveItem}
-          loader={
-            dir &&
-            (loading ||
-              (dir.length !== 0 && Object.keys(json).length === 0)) && (
-              <div className="w-full flex justify-center items-center opacity-75 text-sm">
-                {loading && <small>scraping...</small>}
-                {dir.length !== 0 && Object.keys(json).length === 0 && (
-                  <small>formatting...</small>
-                )}
-                <small className="animate-spin mx-1">⏳</small>
-              </div>
-            )
-          }
-        />
+        <div className="flex w-[50vw] h-[70vh]">
+          <Menu
+            isDarkMode={isDarkMode}
+            CourseSearch={
+              <CourseSearchBox
+                url={url}
+                setUrl={setUrl}
+                setLoading={setLoading}
+                setJson={setJson}
+                setDir={setDir}
+                isDarkMode={isDarkMode}
+                setIsDarkMode={setIsDarkMode}
+              />
+            }
+            CourseDirectory={
+              <CourseDirectory
+                formatted={json}
+                editKeyInJson={editKeyInJson}
+                saveItem={saveItem}
+                isDarkMode={isDarkMode}
+                loader={
+                  dir &&
+                  (loading ||
+                    (dir.length !== 0 && Object.keys(json).length === 0)) && (
+                    <div className="w-full flex justify-center items-center opacity-75 text-sm">
+                      {loading && <small>scraping...</small>}
+                      {dir.length !== 0 && Object.keys(json).length === 0 && (
+                        <small>formatting...</small>
+                      )}
+                      <small className="animate-spin mx-1">⏳</small>
+                    </div>
+                  )
+                }
+              />
+            }
+            CoursesMenu={
+              <CoursesMenu
+                setJson={setJson}
+                toast={toast}
+                isDarkMode={isDarkMode}
+              />
+            }
+          />
+        </div>
+
+        <div className="flex justify-center p-3">
+          <form>
+            <input
+              type="text"
+              placeholder="Save course as..."
+              value={savename}
+              onChange={(e) => setSaveName(e.target.value)}
+              className="border-t border-b border-l px-4 py-2 rounded-l-lg outline-none"
+            />
+            <button
+              className="border p-2 hover:bg-gray-200 rounded-r-lg"
+              type="submit"
+              onClick={(e) => {
+                e.preventDefault();
+                saveItem(savename, json);
+                setSaveName("");
+              }}
+            >
+              💾
+            </button>
+          </form>
+        </div>
       </main>
     </>
   );
