@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: "/courser",
-  output: "export",
-  reactStrictMode: true,
+  // basePath: "/courser",
+  // output: "export",
+  reactStrictMode: true, 
+  distDir: "build",
 
   env: {
     NEXT_ENV: "production",
